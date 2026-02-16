@@ -18,6 +18,12 @@ export interface ExposeOptions {
    * Override readOnly hint detection
    */
   readOnlyResolver?: (path: string[], contract: any) => boolean
+
+  /**
+   * Called after a mutation tool executes successfully.
+   * Use to trigger UI refresh (e.g., Next.js router.refresh()).
+   */
+  onMutate?: (toolName: string, result: unknown) => void
 }
 
 export interface ToolRegistration {

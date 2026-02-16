@@ -15,10 +15,8 @@ export function useWebMCP<T extends Record<string, any>>(
   const registrationRef = useRef<Registration | null>(null)
 
   useEffect(() => {
-    // Register tools on mount
     registrationRef.current = exposeRouter(router, client, options)
 
-    // Cleanup on unmount
     return () => {
       registrationRef.current?.unregister()
       registrationRef.current = null

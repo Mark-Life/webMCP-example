@@ -94,6 +94,9 @@ export function exposeRouter<T extends Record<string, any>>(
         execute: async (args: any) => {
           try {
             const result = await clientProcedure(args)
+            if (!readOnlyHint && options.onMutate) {
+              options.onMutate(toolName, result)
+            }
             return {
               content: [
                 {

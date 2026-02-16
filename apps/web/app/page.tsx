@@ -3,6 +3,8 @@ import { TaskItem } from '@/components/task-item'
 import { TaskForm } from '@/components/task-form'
 import { ListTodoIcon } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Page() {
   const tasks = await serverClient.tasks.list({})
 
