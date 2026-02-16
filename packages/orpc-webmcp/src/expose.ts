@@ -20,10 +20,10 @@ export function exposeRouter<T extends Record<string, any>>(
   const modelContext = (navigator as any).modelContext
 
   /**
-   * Check if object is an oRPC procedure by looking for handler function
+   * Check if object is an oRPC procedure by checking for ~orpc contract
    */
   function isProcedure(obj: any): boolean {
-    return typeof obj === 'function' && typeof obj.handler === 'function'
+    return obj && typeof obj === 'object' && '~orpc' in obj
   }
 
   /**
@@ -49,24 +49,24 @@ export function exposeRouter<T extends Record<string, any>>(
    * Register a single procedure as a WebMCP tool
    */
   function registerProcedure(path: string[], procedure: any) {
+    const contract = procedure['~orpc']
+
     const toolName = options.nameResolver
       ? options.nameResolver(path)
       : options.prefix
         ? `${options.prefix}.${path.join('.')}`
         : path.join('.')
 
-    // Try to extract schema from procedure
-    // oRPC procedures may have InputSchema on the procedure itself or in metadata
-    const inputSchemaZod = procedure.InputSchema || procedure._def?.InputSchema
+    // Extract input schema from contract
+    const inputSchemaZod = contract?.InputSchema
 
     const description =
-      options.descriptionResolver?.(path, procedure) ||
-      procedure.description ||
-      procedure._def?.description ||
+      options.descriptionResolver?.(path, contract) ||
+      contract?.description ||
       `Call ${toolName} procedure`
 
     const readOnlyHint =
-      options.readOnlyResolver?.(path, procedure) ?? isReadOnlyByConvention(path)
+      options.readOnlyResolver?.(path, contract) ?? isReadOnlyByConvention(path)
 
     // Convert Zod input schema to JSON Schema
     let inputSchema: any = { type: 'object' }
@@ -78,7 +78,7 @@ export function exposeRouter<T extends Record<string, any>>(
         })
         inputSchema = converted
       } catch (err) {
-        console.warn(`Failed to convert schema for ${toolName}:`, err)
+        console.warn(`[WebMCP] Failed to convert schema for ${toolName}:`, err)
       }
     }
 
@@ -146,7 +146,7 @@ export function exposeRouter<T extends Record<string, any>>(
   // Start traversal
   traverse(router)
 
-  console.log(`[WebMCP] Registered ${tools.length} tools`)
+  console.log(`[WebMCP] Registered ${tools.length} tools from router`)
 
   return {
     unregister: () => {

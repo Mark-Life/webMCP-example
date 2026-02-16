@@ -8,7 +8,7 @@ import { router } from "@/lib/orpc/router"
 import { client } from "@/lib/orpc/client"
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  useWebMCP(router, client, { prefix: "tasks" })
+  useWebMCP(router, client)
 
   return (
     <NextThemesProvider
