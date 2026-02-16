@@ -1,5 +1,6 @@
 "use client"
 
+import "@/lib/webmcp-setup"
 import "@mcp-b/global"
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
