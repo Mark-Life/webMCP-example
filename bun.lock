@@ -65,7 +65,6 @@
       "dependencies": {
         "@orpc/server": "^1.13.5",
         "zod": "^4.3.6",
-        "zod-to-json-schema": "^3.24.1",
       },
       "devDependencies": {
         "@types/react": "^19.2.10",

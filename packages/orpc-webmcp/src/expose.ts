@@ -1,5 +1,5 @@
 import type { RouterClient } from '@orpc/server'
-import { zodToJsonSchema } from 'zod-to-json-schema'
+import { z } from 'zod'
 import type { ExposeOptions, Registration, ToolRegistration } from './types'
 
 /**
@@ -58,7 +58,7 @@ export function exposeRouter<T extends Record<string, any>>(
         : path.join('.')
 
     // Extract input schema from contract
-    const inputSchemaZod = contract?.InputSchema
+    const inputSchemaZod = contract?.inputSchema
 
     const description =
       options.descriptionResolver?.(path, contract) ||
@@ -68,14 +68,11 @@ export function exposeRouter<T extends Record<string, any>>(
     const readOnlyHint =
       options.readOnlyResolver?.(path, contract) ?? isReadOnlyByConvention(path)
 
-    // Convert Zod input schema to JSON Schema
+    // Convert Zod input schema to JSON Schema (Zod v4 built-in)
     let inputSchema: any = { type: 'object' }
     if (inputSchemaZod) {
       try {
-        const converted = zodToJsonSchema(inputSchemaZod, {
-          target: 'openApi3',
-          $refStrategy: 'none',
-        })
+        const { $schema, ...converted } = z.toJSONSchema(inputSchemaZod)
         inputSchema = converted
       } catch (err) {
         console.warn(`[WebMCP] Failed to convert schema for ${toolName}:`, err)
