@@ -306,28 +306,26 @@ In-browser UI to see tools, fill params, execute, see results. No MCP client nee
 
 Good for: dev/debug, validating schemas + descriptions, testing without AI overhead.
 
-### Option 3: MCP-B + Claude Desktop (full demo) [PRIMARY]
+### Option 3: MCP-B Chrome Extension (full demo) [PRIMARY]
 
-Real end-to-end: Claude Desktop discovers and calls our tools through the browser.
+Real end-to-end: MCP-B extension discovers and calls our tools through the browser.
+
+> **Note:** Claude Desktop does NOT work with MCP-B/WebMCP — tested and confirmed incompatible. Use the MCP-B extension's built-in chat UI instead.
 
 #### Architecture
 
 ```
-┌─────────────────┐     MCP protocol     ┌──────────────┐
-│ Claude Desktop  │◄────────────────────►│ MCP-B native │
-│ (or Claude Code)│                      │ server       │
-└─────────────────┘                      └──────┬───────┘
-                                                │ localhost:12306
-                                         ┌──────▼───────┐
-                                         │ MCP-B Chrome  │
-                                         │ extension     │
-                                         └──────┬───────┘
-                                                │ DevTools Protocol
-                                         ┌──────▼───────┐
-                                         │ Our app      │
-                                         │ localhost:3000│
-                                         │ + @mcp-b/global│
-                                         └──────────────┘
+┌──────────────────┐
+│ MCP-B Chrome     │
+│ extension        │
+│ (built-in chat)  │
+└──────┬───────────┘
+       │ DevTools Protocol
+┌──────▼───────────┐
+│ Our app          │
+│ localhost:3000   │
+│ + @mcp-b/global  │
+└──────────────────┘
 ```
 
 #### Setup steps
@@ -336,43 +334,18 @@ Real end-to-end: Claude Desktop discovers and calls our tools through the browse
    - Chrome Web Store: https://docs.mcp-b.ai/extension
    - Or build from source: https://github.com/MiguelsPizza/WebMCP
 
-2. **Install native server bridge**
-   ```bash
-   npm install -g @mcp-b/native-server
-   ```
-
-3. **Configure Claude Desktop** — edit `claude_desktop_config.json`:
-   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-   ```json
-   {
-     "mcpServers": {
-       "mcp-b": {
-         "type": "streamable-http",
-         "url": "http://127.0.0.1:12306/mcp"
-       }
-     }
-   }
-   ```
-
-4. **Run native server**
-   ```bash
-   @mcp-b/native-server
-   ```
-   Starts on port 12306 by default.
-
-5. **Run our Next.js app**
+2. **Run our Next.js app**
    ```bash
    bun dev
    ```
    Open `http://localhost:3000` in Chrome with MCP-B extension active.
 
-6. **Tools auto-appear in Claude Desktop** with prefixed names:
-   - `webmcp_localhost_3000_page0_tasks_list`
-   - `webmcp_localhost_3000_page0_tasks_create`
+3. **Tools auto-appear in MCP-B extension** with prefixed names:
+   - `tasks_list`
+   - `tasks_create`
    - etc.
 
-7. **Test with Claude**: "List all my tasks" — Claude discovers tool, calls it, returns results.
+4. **Test via MCP-B chat UI**: use the extension's built-in chat to interact with the tools.
 
 #### Demo test script
 
