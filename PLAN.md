@@ -31,11 +31,6 @@ navigator.modelContext.clearContext()                      // remove all
 ### Current availability
 
 - **Chrome 146 Canary**: behind `chrome://flags/#web-mcp` flag
-- **MCP-B polyfill**: `@mcp-b/global` — works in any browser today
-  - npm: https://www.npmjs.com/package/@mcp-b/global
-  - docs: https://docs.mcp-b.ai/packages/global
-  - examples: https://github.com/WebMCP-org/examples
-  - Chrome extension bridges WebMCP tools to MCP format for Claude Desktop etc.
 
 Spec is NOT stable — API will change. Demo/prototype only.
 
@@ -95,7 +90,6 @@ Build a demo showing how a Next.js app with oRPC backend can expose its API rout
 | Frontend | Next.js 16, React 19, Tailwind 4, shadcn/ui |
 | Backend API | oRPC |
 | Schema | Zod |
-| WebMCP polyfill | `@mcp-b/global` |
 | Schema conversion | `zod-to-json-schema` |
 
 ---
@@ -232,17 +226,15 @@ Key mappings:
 
 ### Phase 4: Wire It Up
 
-1. Install `@mcp-b/global` polyfill
-2. Create a React hook or component (`useWebMCP` / `<WebMCPProvider>`) that:
+1. Create a React hook or component (`useWebMCP` / `<WebMCPProvider>`) that:
    - Calls `exposeRouter()` on mount
    - Cleans up on unmount
-3. Add visual indicator in UI (tools registered count, tool call log)
+2. Add visual indicator in UI (tools registered count, tool call log)
 
 ### Phase 5: Demo & Test
 
-1. Test with MCP-B Chrome extension (connects to Claude Desktop / other MCP clients)
-2. Test with Chrome Canary flag if available
-3. Document how to run the demo in README
+1. Test with Chrome Canary flag (`chrome://flags/#web-mcp`)
+2. Document how to run the demo in README
 
 ---
 
@@ -306,46 +298,27 @@ In-browser UI to see tools, fill params, execute, see results. No MCP client nee
 
 Good for: dev/debug, validating schemas + descriptions, testing without AI overhead.
 
-### Option 3: MCP-B Chrome Extension (full demo) [PRIMARY]
+### Option 3: Chrome Canary (full demo) [PRIMARY]
 
-Real end-to-end: MCP-B extension discovers and calls our tools through the browser.
+Real end-to-end: Chrome Canary with native WebMCP API discovers and calls our tools.
 
-> **Note:** Claude Desktop does NOT work with MCP-B/WebMCP — tested and confirmed incompatible. Use the MCP-B extension's built-in chat UI instead.
-
-#### Architecture
-
-```
-┌──────────────────┐
-│ MCP-B Chrome     │
-│ extension        │
-│ (built-in chat)  │
-└──────┬───────────┘
-       │ DevTools Protocol
-┌──────▼───────────┐
-│ Our app          │
-│ localhost:3000   │
-│ + @mcp-b/global  │
-└──────────────────┘
-```
+> **Note:** Claude Desktop and MCP-B Chrome extension do NOT work — tested and confirmed. Use Chrome Canary with `chrome://flags/#web-mcp` flag instead.
 
 #### Setup steps
 
-1. **Install MCP-B Chrome extension**
-   - Chrome Web Store: https://docs.mcp-b.ai/extension
-   - Or build from source: https://github.com/MiguelsPizza/WebMCP
+1. **Install Chrome Canary** (146+)
+   - https://www.google.com/chrome/canary/
 
-2. **Run our Next.js app**
+2. **Enable WebMCP flag**
+   - Navigate to `chrome://flags/#web-mcp` and enable it
+
+3. **Run our Next.js app**
    ```bash
    bun dev
    ```
-   Open `http://localhost:3000` in Chrome with MCP-B extension active.
+   Open `http://localhost:3000` in Chrome Canary.
 
-3. **Tools auto-appear in MCP-B extension** with prefixed names:
-   - `tasks_list`
-   - `tasks_create`
-   - etc.
-
-4. **Test via MCP-B chat UI**: use the extension's built-in chat to interact with the tools.
+4. **Tools are registered** via native `navigator.modelContext` API.
 
 #### Demo test script
 
@@ -365,23 +338,7 @@ Sequence of prompts to validate all tools work:
 
 - WebMCP spec: https://github.com/webmachinelearning/webmcp
 - WebMCP proposal: https://github.com/webmachinelearning/webmcp/blob/main/docs/proposal.md
-- WebMCP security considerations: https://github.com/webmachinelearning/webmcp/blob/main/docs/security-privacy-considerations.md
-- WebMCP service workers: https://github.com/webmachinelearning/webmcp/blob/main/docs/service-workers.md
-- MCP-B polyfill: https://docs.mcp-b.ai/packages/global
-- MCP-B examples: https://github.com/WebMCP-org/examples
-- MCP-B Chrome extension: https://github.com/WebMCP-org
 - Chrome Canary flag: `chrome://flags/#web-mcp`
 - oRPC: https://orpc.dev
 - zod-to-json-schema: https://www.npmjs.com/package/zod-to-json-schema
 - MCP spec: https://modelcontextprotocol.io/specification/latest
-- VentureBeat article: https://venturebeat.com/infrastructure/google-chrome-ships-webmcp-in-early-preview-turning-every-website-into-a
-
----
-
-## Open Questions
-
-1. **oRPC version**: oRPC has v1 and v0 — need to check which API shape to use for router introspection / meta access
-2. **Schema introspection**: Can we walk oRPC router definition on the client side, or do we need a build step / code-gen to extract procedure metadata?
-3. **MCP-B extension availability**: Need to verify MCP-B Chrome extension still works and is installable
-4. **`@mcp-b/global` API**: Docs show both `handler` and `execute` — need to verify current callback field name
-5. **Tool call visualization**: How to intercept/log tool invocations for the demo UI panel?

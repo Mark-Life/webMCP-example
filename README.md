@@ -18,8 +18,8 @@ Think: MCP but client-side, in the browser, with human-in-the-loop.
 │                                              │
 │  ┌──────────────┐    ┌───────────────────┐   │
 │  │ AI Agent     │◄──►│ navigator         │   │
-│  │ (MCP-B ext / │    │ .modelContext     │   │
-│  │  Chrome API) │    └────────┬──────────┘   │
+│  │ (Chrome      │    │ .modelContext     │   │
+│  │  Canary API) │    └────────┬──────────┘   │
 │  └──────────────┘             │              │
 │                     execute() calls          │
 │                               │              │
@@ -52,7 +52,6 @@ Think: MCP but client-side, in the browser, with human-in-the-loop.
 | Backend API | oRPC |
 | Schema | Zod |
 | WebMCP bridge | `packages/orpc-webmcp` (included) |
-| WebMCP polyfill | `@mcp-b/global` |
 
 ## Getting Started
 
@@ -72,19 +71,7 @@ App runs at `http://localhost:3000`.
 
 ## Using WebMCP
 
-Two ways to connect an AI agent to the tools exposed by this app:
-
-### Option A: MCP-B Chrome Extension (easiest)
-
-The [MCP-B](https://mcp-b.ai/) extension polyfills the WebMCP API and provides a built-in chat UI to interact with registered tools.
-
-1. Install the [MCP-B Chrome extension](https://chromewebstore.google.com/detail/mcp-b/ijcmobgfbhifcobjdnaikdadgdbeaojh) ([source](https://github.com/WebMCP-org))
-2. Run the app (`bun dev`)
-3. Open `http://localhost:3000` in Chrome
-4. Click the MCP-B extension icon — tools are auto-discovered
-5. Use the built-in chat to interact with the task manager
-
-### Option B: Chrome Canary (native WebMCP)
+### Chrome Canary (native WebMCP)
 
 Chrome 146+ ships an early preview of the native `navigator.modelContext` API.
 
@@ -128,6 +115,5 @@ packages/orpc-webmcp/            # Generic oRPC-to-WebMCP bridge
 ## References
 
 - [WebMCP spec](https://github.com/webmachinelearning/webmcp)
-- [MCP-B](https://mcp-b.ai/) / [MCP-B GitHub](https://github.com/WebMCP-org)
 - [oRPC](https://orpc.dev)
 - [MCP spec](https://modelcontextprotocol.io/specification/latest)
