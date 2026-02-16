@@ -12,8 +12,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@mcp-b/global": "^1.0.0",
     "@orpc/client": "^1.13.5",
     "@orpc/server": "^1.13.5",
+    "@workspace/orpc-webmcp": "workspace:*",
     "@workspace/ui": "workspace:*",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",

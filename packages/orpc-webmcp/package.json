@@ -1,0 +1,32 @@
+{
+  "name": "@workspace/orpc-webmcp",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./react": "./src/react.ts"
+  },
+  "dependencies": {
+    "@orpc/server": "^1.13.5",
+    "zod": "^4.3.6",
+    "zod-to-json-schema": "^3.24.1"
+  },
+  "peerDependencies": {
+    "@mcp-b/global": "^1.0.0",
+    "react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@mcp-b/global": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.10",
+    "@workspace/typescript-config": "workspace:*",
+    "typescript": "^5.9.3"
+  }
+}
