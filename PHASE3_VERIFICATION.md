@@ -44,6 +44,7 @@ Open browser DevTools console and verify:
 ```js
 // Check if modelContext exists
 console.log(navigator.modelContext)
+// Should see: ModelContext { registerTool, unregisterTool, provideContext, clearContext }
 
 // Should see registration logs like:
 // [WebMCP] Registered tool: tasks.list
@@ -52,23 +53,20 @@ console.log(navigator.modelContext)
 // [WebMCP] Registered tool: tasks.create
 // [WebMCP] Registered tool: tasks.update
 // [WebMCP] Registered tool: tasks.delete
-// [WebMCP] Registered 6 tools
+// [WebMCP] Registered 6 tools from router
 ```
 
-### 3. Manual Tool Call Test
+**Note:** The `@mcp-b/global` polyfill doesn't expose a `getTools()` method for manual inspection. Tools are registered internally and accessible to MCP-B browser extension through internal APIs.
 
-```js
-// Get all registered tools
-const tools = navigator.modelContext.getTools()
-console.log('Registered tools:', tools.map(t => t.name))
+### 3. Expected Console Output
 
-// Manually call a tool (example: tasks.list)
-const listTool = tools.find(t => t.name === 'tasks.list')
-if (listTool) {
-  const result = await listTool.execute({})
-  console.log('Result:', result)
-}
+You may see this warning (safe to ignore):
 ```
+[WebModelContext] Failed to initialize native adapter: TypeError: this.nativeContext.listTools is not a function
+[WebModelContext] Auto-initialization failed: ...
+```
+
+This occurs because Chrome's native WebMCP implementation is incomplete. The polyfill falls back to pure JavaScript implementation which works correctly.
 
 ### 4. Expected Tool Registration
 
