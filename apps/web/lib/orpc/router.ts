@@ -1,6 +1,6 @@
 import { os, ORPCError } from '@orpc/server'
 import { z } from 'zod'
-import { TaskStatus, Task } from './schemas'
+import { TaskStatus } from './schemas'
 import * as store from './store'
 
 const p = os.$context<{ headers: Headers }>()
@@ -52,3 +52,6 @@ const tasks = {
 }
 
 export const router = { tasks }
+
+export type RouterInputs = typeof router
+export type RouterOutputs = typeof router
