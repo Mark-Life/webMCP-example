@@ -135,11 +135,68 @@ Simple task/todo app — easy to understand, has both reads and mutations.
 5. Create oRPC client for frontend
 6. In-memory data store (array of tasks, no DB needed for demo)
 
-### Phase 2: Frontend UI
+### Phase 2: Frontend UI + Server Actions
 
 1. Task list page — fetch via oRPC client
 2. Add/edit/delete UI with shadcn components
 3. Basic but polished — this is a demo
+
+**Server Actions pattern**: Form submissions go through Next.js server actions that wrap oRPC calls. This gives us the best of all worlds:
+
+- **oRPC** — typed procedures, OpenAPI spec generation, shared Zod schemas
+- **Server Actions** — progressive enhancement, no client JS required for forms, built-in Next.js form handling
+- **WebMCP** — same oRPC procedures exposed to AI agents via browser
+
+```
+User submits form
+       │
+       ▼
+Server Action (app/actions/tasks.ts)
+       │ calls
+       ▼
+oRPC server-side client (direct, no HTTP)
+       │
+       ▼
+oRPC procedure handler
+```
+
+```
+AI Agent calls tool
+       │
+       ▼
+navigator.modelContext (WebMCP)
+       │ execute()
+       ▼
+oRPC browser client (HTTP)
+       │
+       ▼
+Next.js API route -> oRPC procedure handler
+```
+
+Same oRPC procedures, two consumption paths. Server actions for forms, WebMCP for agents.
+
+Example:
+```ts
+// app/actions/tasks.ts
+'use server'
+import { serverClient } from '@/lib/orpc/server-client'
+
+export const createTask = async (formData: FormData) => {
+  return serverClient.tasks.create({
+    title: formData.get('title') as string,
+    description: formData.get('description') as string,
+  })
+}
+```
+
+```tsx
+// component using server action
+<form action={createTask}>
+  <input name="title" />
+  <input name="description" />
+  <button type="submit">Add Task</button>
+</form>
+```
 
 ### Phase 3: oRPC-to-WebMCP Bridge (`packages/orpc-webmcp`)
 
@@ -194,14 +251,17 @@ Key mappings:
 ```
 apps/web/
   app/
-    api/[...rest]/route.ts      # oRPC API handler
+    api/[...rest]/route.ts      # oRPC API handler (HTTP, used by browser client + WebMCP)
+    actions/
+      tasks.ts                  # server actions wrapping oRPC (used by forms)
     page.tsx                     # task list UI
     layout.tsx
   lib/
     orpc/
       router.ts                 # oRPC router definition
       schemas.ts                # Zod schemas
-      client.ts                 # oRPC client
+      client.ts                 # oRPC browser client (HTTP)
+      server-client.ts          # oRPC server-side client (direct, no HTTP)
       store.ts                  # in-memory task store
   components/
     task-list.tsx
@@ -215,6 +275,116 @@ packages/orpc-webmcp/
   index.ts                      # exposeRouter() + types
   package.json
 ```
+
+---
+
+## Testing
+
+Three approaches, from simplest to full end-to-end.
+
+### Option 1: Console / DevTools (dev sanity check)
+
+Verify tools register correctly — no agent, no extension.
+
+1. Run app (`bun dev`)
+2. Open DevTools console
+3. Check `navigator.modelContext` exists (polyfill loaded)
+4. Inspect registered tools
+5. Manually call a tool's execute function with test input
+
+Good for: quick iteration, debugging schema issues, confirming wiring.
+
+### Option 2: Chrome Canary + Model Context Tool Inspector (visual, manual)
+
+In-browser UI to see tools, fill params, execute, see results. No MCP client needed.
+
+1. Install Chrome Canary (146+)
+2. Enable `chrome://flags/#web-mcp`
+3. Install Model Context Tool Inspector extension (https://github.com/nicolo-ribaudo/model-context-tool-inspector — Chrome Web Store or load unpacked)
+4. Open app -> click extension icon
+5. See all registered tools with schemas, execute manually with custom input
+
+Good for: dev/debug, validating schemas + descriptions, testing without AI overhead.
+
+### Option 3: MCP-B + Claude Desktop (full demo) [PRIMARY]
+
+Real end-to-end: Claude Desktop discovers and calls our tools through the browser.
+
+#### Architecture
+
+```
+┌─────────────────┐     MCP protocol     ┌──────────────┐
+│ Claude Desktop  │◄────────────────────►│ MCP-B native │
+│ (or Claude Code)│                      │ server       │
+└─────────────────┘                      └──────┬───────┘
+                                                │ localhost:12306
+                                         ┌──────▼───────┐
+                                         │ MCP-B Chrome  │
+                                         │ extension     │
+                                         └──────┬───────┘
+                                                │ DevTools Protocol
+                                         ┌──────▼───────┐
+                                         │ Our app      │
+                                         │ localhost:3000│
+                                         │ + @mcp-b/global│
+                                         └──────────────┘
+```
+
+#### Setup steps
+
+1. **Install MCP-B Chrome extension**
+   - Chrome Web Store: https://docs.mcp-b.ai/extension
+   - Or build from source: https://github.com/MiguelsPizza/WebMCP
+
+2. **Install native server bridge**
+   ```bash
+   npm install -g @mcp-b/native-server
+   ```
+
+3. **Configure Claude Desktop** — edit `claude_desktop_config.json`:
+   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+   ```json
+   {
+     "mcpServers": {
+       "mcp-b": {
+         "type": "streamable-http",
+         "url": "http://127.0.0.1:12306/mcp"
+       }
+     }
+   }
+   ```
+
+4. **Run native server**
+   ```bash
+   @mcp-b/native-server
+   ```
+   Starts on port 12306 by default.
+
+5. **Run our Next.js app**
+   ```bash
+   bun dev
+   ```
+   Open `http://localhost:3000` in Chrome with MCP-B extension active.
+
+6. **Tools auto-appear in Claude Desktop** with prefixed names:
+   - `webmcp_localhost_3000_page0_tasks_list`
+   - `webmcp_localhost_3000_page0_tasks_create`
+   - etc.
+
+7. **Test with Claude**: "List all my tasks" — Claude discovers tool, calls it, returns results.
+
+#### Demo test script
+
+Sequence of prompts to validate all tools work:
+
+1. "What tools are available from the task manager?"
+2. "Create a task called 'Buy groceries' with description 'Milk, eggs, bread'"
+3. "List all tasks"
+4. "Mark the groceries task as in-progress"
+5. "Search for tasks about groceries"
+6. "Delete the groceries task"
+7. "Create 3 tasks and then show me the full list" (multi-step)
 
 ---
 
